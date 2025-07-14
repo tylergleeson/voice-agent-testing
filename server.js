@@ -24,6 +24,36 @@ app.get('/', (req, res) => {
   res.json({ status: 'Voice Agent Test Server Running' });
 });
 
+// List audio files endpoint
+app.get('/audio-files', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  
+  try {
+    const audioDir = path.join(__dirname, 'audio');
+    if (!fs.existsSync(audioDir)) {
+      return res.json({ files: [], message: 'Audio directory does not exist' });
+    }
+    
+    const files = fs.readdirSync(audioDir);
+    const audioFiles = files
+      .filter(file => file.endsWith('.mp3'))
+      .map(file => ({
+        name: file,
+        url: `${process.env.BASE_URL || 'https://voice-agent-testing-production.up.railway.app'}/audio/${file}`,
+        created: fs.statSync(path.join(audioDir, file)).mtime
+      }))
+      .sort((a, b) => b.created - a.created);
+    
+    res.json({ 
+      count: audioFiles.length,
+      files: audioFiles 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || 'https://voice-agent-testing-production.up.railway.app';
 
