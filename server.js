@@ -24,6 +24,10 @@ app.use('/voice', voiceRoutes);
 app.use('/voice', voiceStreamRoutes); // Voice 2.0 streaming routes
 app.use('/test', testRoutes);
 
+// Initialize Voice Stream Orchestrator (this sets up event handlers)
+const VoiceStreamOrchestrator = require('./services/voice-stream-orchestrator');
+console.log('Voice Stream Orchestrator initialized');
+
 // WebSocket endpoint for Twilio Media Streams (must be after regular routes)
 app.ws('/voice/media-stream', (ws, req) => {
   console.log('New Twilio Media Stream WebSocket connection');
