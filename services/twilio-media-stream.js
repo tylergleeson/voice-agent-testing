@@ -20,22 +20,16 @@ class TwilioMediaStreamService extends EventEmitter {
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message);
-        // Only log event type to reduce noise
-        console.log(`[Twilio Event] ${data.event}`);
         
-        // Store connection info from start event
+        // Store connection info from start event FIRST
         if (data.event === 'start') {
           connectionInfo.callSid = data.start.callSid;
           connectionInfo.streamSid = data.start.streamSid;
           this.connections.set(connectionInfo.callSid, { ws, streamSid: connectionInfo.streamSid });
-          console.log(`Media stream started for call: ${connectionInfo.callSid}`);
-          console.log('Emitting stream_started event with data:', {
-            callSid: data.start.callSid,
-            streamSid: data.start.streamSid
-          });
+          console.log(`[Twilio] Stored connection info for call: ${connectionInfo.callSid}`);
         }
         
-        // Handle message with connection info
+        // Then handle the message (which will emit events)
         this.handleTwilioMessage(ws, data, connectionInfo);
         
       } catch (error) {
@@ -58,18 +52,18 @@ class TwilioMediaStreamService extends EventEmitter {
   }
 
   handleTwilioMessage(ws, data, connectionInfo) {
-    console.log('Twilio event:', data.event);
+    console.log(`[Twilio Event] ${data.event}`);
     
     switch (data.event) {
       case 'connected':
-        console.log('Twilio Media Stream connected');
+        console.log('[Twilio] WebSocket connected successfully');
         this.emit('connected', ws);
         break;
         
       case 'start':
-        console.log('=== MEDIA STREAM START EVENT ===');
-        console.log('CallSid:', data.start.callSid);
-        console.log('StreamSid:', data.start.streamSid);
+        console.log('[Twilio] Media stream started');
+        console.log(`[Twilio] CallSid: ${data.start.callSid}`);
+        console.log(`[Twilio] Emitting stream_started event`);
         this.emit('stream_started', {
           callSid: data.start.callSid,
           streamSid: data.start.streamSid,
