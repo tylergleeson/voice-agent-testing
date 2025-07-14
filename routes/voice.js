@@ -1,8 +1,8 @@
 const express = require('express');
 const { VoiceResponse } = require('twilio').twiml;
 const TTS = require('../services/tts');
-const Analysis = require('../services/analysis');
-const testQuestions = require('../data/test-questions.json');
+const Conversation = require('../services/conversation');
+const Transcription = require('../services/transcription');
 
 const router = express.Router();
 
@@ -27,43 +27,22 @@ router.post('/webhook', async (req, res) => {
       session = {
         callSid: CallSid,
         phoneNumber: From,
-        currentQuestion: 0,
-        responses: [],
+        conversationHistory: [],
         startTime: new Date()
       };
       sessions.set(CallSid, session);
       
       // Welcome message
+      const welcomeMessage = Conversation.getWelcomeMessage();
       try {
-        const welcomeAudio = await TTS.generateAudio(
-          "Hello! Thank you for participating in our voice survey. This will take about 3 minutes."
-        );
+        const welcomeAudio = await TTS.generateAudio(welcomeMessage);
         twiml.play(welcomeAudio);
       } catch (error) {
         console.log('TTS failed, using Twilio fallback');
-        twiml.say("Hello! Thank you for participating in our voice survey. This will take about 3 minutes.");
-      }
-      twiml.pause({ length: 1 });
-    }
-    
-    // Process recording if present
-    if (RecordingUrl) {
-      await processRecording(session, RecordingUrl);
-    }
-    
-    // Get next question
-    const nextQuestion = getNextQuestion(session);
-    
-    if (nextQuestion) {
-      // Generate audio for question
-      try {
-        const questionAudio = await TTS.generateAudio(nextQuestion.text);
-        twiml.play(questionAudio);
-      } catch (error) {
-        console.log('TTS failed, using Twilio fallback');
-        twiml.say(nextQuestion.text);
+        twiml.say(welcomeMessage);
       }
       
+      // Start recording for user response
       twiml.record({
         maxLength: 30,
         timeout: 5,
@@ -71,21 +50,45 @@ router.post('/webhook', async (req, res) => {
         action: '/voice/webhook',
         method: 'POST'
       });
-    } else {
-      // End survey
-      try {
-        const thanksAudio = await TTS.generateAudio(
-          "Thank you for completing the survey! Your responses have been recorded."
-        );
-        twiml.play(thanksAudio);
-      } catch (error) {
-        console.log('TTS failed, using Twilio fallback');
-        twiml.say("Thank you for completing the survey! Your responses have been recorded.");
-      }
-      twiml.hangup();
+    }
+    
+    // Process recording if present (user spoke)
+    if (RecordingUrl) {
+      const aiResponse = await processConversation(session, RecordingUrl);
       
-      // Process final session
-      await processFinalSession(session);
+      if (aiResponse.shouldEndCall) {
+        // End conversation
+        const goodbyeMessage = Conversation.getGoodbyeMessage();
+        try {
+          const goodbyeAudio = await TTS.generateAudio(goodbyeMessage);
+          twiml.play(goodbyeAudio);
+        } catch (error) {
+          console.log('TTS failed, using Twilio fallback');
+          twiml.say(goodbyeMessage);
+        }
+        twiml.hangup();
+        
+        // Clean up session
+        await processFinalSession(session);
+      } else {
+        // Continue conversation
+        try {
+          const responseAudio = await TTS.generateAudio(aiResponse.response);
+          twiml.play(responseAudio);
+        } catch (error) {
+          console.log('TTS failed, using Twilio fallback');
+          twiml.say(aiResponse.response);
+        }
+        
+        // Record next user response
+        twiml.record({
+          maxLength: 30,
+          timeout: 5,
+          transcribe: false,
+          action: '/voice/webhook',
+          method: 'POST'
+        });
+      }
     }
     
   } catch (error) {
@@ -130,78 +133,55 @@ router.post('/initiate-test-call', async (req, res) => {
 });
 
 // Helper functions
-function getNextQuestion(session) {
-  if (session.currentQuestion < testQuestions.length) {
-    const question = testQuestions[session.currentQuestion];
-    session.currentQuestion++;
-    return question;
-  }
-  return null;
-}
-
-async function processRecording(session, recordingUrl) {
-  console.log(`Processing recording: ${recordingUrl}`);
-  
-  // Skip processing if API keys not configured
-  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your_openai_key') {
-    console.log('Skipping recording processing - OpenAI API key not configured');
-    session.responses.push({
-      questionIndex: session.currentQuestion - 1,
-      question: testQuestions[session.currentQuestion - 1],
-      recordingUrl,
-      transcription: { text: '[Recording received - processing skipped]' },
-      analysis: { qualityScore: 0 },
-      timestamp: new Date()
-    });
-    return;
-  }
+async function processConversation(session, recordingUrl) {
+  console.log(`Processing conversation: ${recordingUrl}`);
   
   try {
-    // Transcribe the recording
-    const transcription = await require('../services/transcription').transcribe(recordingUrl);
+    // Transcribe the user's speech
+    const transcription = await Transcription.transcribe(recordingUrl);
+    const userMessage = transcription.text;
     
-    // Analyze with LLM
-    const analysis = await Analysis.analyzeResponse(
-      transcription.text,
-      testQuestions[session.currentQuestion - 1]
+    console.log(`User said: "${userMessage}"`);
+    
+    // Generate AI response
+    const aiResponse = await Conversation.generateResponse(userMessage, session.conversationHistory);
+    
+    // Update conversation history
+    session.conversationHistory.push(
+      { role: 'user', content: userMessage },
+      { role: 'assistant', content: aiResponse.response }
     );
     
-    // Store response
-    session.responses.push({
-      questionIndex: session.currentQuestion - 1,
-      question: testQuestions[session.currentQuestion - 1],
-      recordingUrl,
-      transcription,
-      analysis,
-      timestamp: new Date()
+    console.log('Conversation exchange:', {
+      user: userMessage,
+      ai: aiResponse.response,
+      shouldEnd: aiResponse.shouldEndCall
     });
     
-    console.log('Response processed:', {
-      question: testQuestions[session.currentQuestion - 1].text,
-      transcription: transcription.text,
-      qualityScore: analysis.qualityScore
-    });
+    return aiResponse;
     
   } catch (error) {
-    console.error('Recording processing error:', error);
+    console.error('Conversation processing error:', error);
+    
+    // Fallback response
+    return {
+      response: "I'm sorry, I didn't catch that. Could you say that again?",
+      shouldEndCall: false
+    };
   }
 }
 
 async function processFinalSession(session) {
-  console.log('\n=== SURVEY COMPLETED ===');
+  console.log('\n=== CONVERSATION COMPLETED ===');
   console.log(`Call SID: ${session.callSid}`);
   console.log(`Duration: ${Date.now() - session.startTime.getTime()}ms`);
-  console.log(`Questions: ${session.responses.length}`);
+  console.log(`Conversation exchanges: ${session.conversationHistory.length / 2}`);
   
-  session.responses.forEach((response, index) => {
-    console.log(`\nQ${index + 1}: ${response.question.text}`);
-    console.log(`A${index + 1}: ${response.transcription.text}`);
-    console.log(`Score: ${response.analysis.qualityScore}/10`);
+  // Log conversation history
+  session.conversationHistory.forEach((message, index) => {
+    const speaker = message.role === 'user' ? 'User' : 'AI';
+    console.log(`${speaker}: ${message.content}`);
   });
-  
-  // Calculate overall session quality
-  const avgQuality = session.responses.reduce((sum, r) => sum + r.analysis.qualityScore, 0) / session.responses.length;
-  console.log(`\nOverall Quality: ${avgQuality.toFixed(1)}/10`);
   
   // Remove from memory
   sessions.delete(session.callSid);
