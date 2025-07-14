@@ -22,10 +22,21 @@ class TwilioMediaStreamService extends EventEmitter {
         
         // Store connection info from start event FIRST
         if (data.event === 'start') {
+          console.log('=== PROCESSING START EVENT ===');
           connectionInfo.callSid = data.start.callSid;
           connectionInfo.streamSid = data.start.streamSid;
+          connectionInfo.hasEmittedStart = true;
           this.connections.set(connectionInfo.callSid, { ws, streamSid: connectionInfo.streamSid });
           console.log(`[Twilio] Stored connection info for call: ${connectionInfo.callSid}`);
+        }
+        
+        // If we get media but no start event yet, create synthetic start
+        if (data.event === 'media' && !connectionInfo.hasEmittedStart) {
+          console.log('=== CREATING EMERGENCY SYNTHETIC START ===');
+          connectionInfo.callSid = `EMERGENCY_${Date.now()}`;
+          connectionInfo.streamSid = `STREAM_${Date.now()}`;
+          connectionInfo.hasEmittedStart = true;
+          console.log(`[Twilio] Emergency CallSid: ${connectionInfo.callSid}`);
         }
         
         // Then handle the message (which will emit events)
