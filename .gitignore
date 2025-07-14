@@ -7,3 +7,5 @@ temp/
 temp_audio.wav
 *.log
 .DS_Store
+temp.txt
+server.log
