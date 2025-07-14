@@ -42,10 +42,20 @@ class ElevenLabsVoice2Service extends EventEmitter {
         console.log('Sending conversation initiation...');
         const initMessage = {
           type: "conversation_initiation_client_data",
-          conversation_initiation_client_data: {
-            custom_llm_extra_body: {}
-          }
+          conversation_config_override: {
+            agent: {
+              prompt: {
+                prompt: "You are a friendly, professional voice assistant conducting brief phone conversations with callers. Keep responses under 30 seconds when spoken. Ask engaging follow-up questions and show genuine interest in the person."
+              },
+              first_message: "Hello! Thanks for calling. I'm an AI assistant and I'd love to have a quick chat with you. How are you doing today?",
+              language: "en"
+            }
+          },
+          custom_llm_extra_body: {},
+          dynamic_variables: {}
         };
+        
+        console.log('Initiation message:', JSON.stringify(initMessage, null, 2));
         this.ws.send(JSON.stringify(initMessage));
         
         this.emit('connected');
