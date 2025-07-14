@@ -9,8 +9,6 @@ class TwilioMediaStreamService extends EventEmitter {
 
   handleConnection(ws, req) {
     console.log('=== NEW TWILIO MEDIA STREAM CONNECTION ===');
-    console.log('Headers:', req.headers);
-    console.log('URL:', req.url);
     
     let connectionInfo = {
       callSid: null,
