@@ -18,6 +18,15 @@ class TranscriptionService {
       });
 
       // Use OpenAI Whisper as primary transcription
+      if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your_openai_key') {
+        console.log('OpenAI not configured, using fallback transcription');
+        return {
+          text: "[Transcription not available - OpenAI key not configured]",
+          confidence: 0.0,
+          service: 'fallback'
+        };
+      }
+      
       const openai = require('openai');
       const client = new openai({ apiKey: process.env.OPENAI_API_KEY });
       

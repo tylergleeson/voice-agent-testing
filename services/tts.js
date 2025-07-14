@@ -14,6 +14,12 @@ class TTSService {
     try {
       console.log(`Generating audio for: "${text}"`);
       
+      // Check if ElevenLabs is configured
+      if (!this.apiKey || this.apiKey === 'your_elevenlabs_key') {
+        console.log('ElevenLabs not configured, throwing error for fallback');
+        throw new Error('ElevenLabs API key not configured');
+      }
+      
       const response = await axios({
         method: 'POST',
         url: `${this.baseUrl}/text-to-speech/${this.voiceId}`,

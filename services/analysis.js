@@ -2,13 +2,31 @@ const OpenAI = require('openai');
 
 class AnalysisService {
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+    this.openai = null;
+    if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_key') {
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      });
+    }
   }
 
   async analyzeResponse(responseText, question) {
     try {
+      // If OpenAI is not configured, return fallback immediately
+      if (!this.openai) {
+        console.log('OpenAI not configured, using fallback analysis');
+        return {
+          qualityScore: 5,
+          wordCount: responseText.split(' ').length,
+          sentiment: 'neutral',
+          emotion: 'neutral',
+          specificity: 5,
+          relevance: 5,
+          insights: ['Response recorded'],
+          summary: 'Basic response provided',
+          note: 'OpenAI analysis not available'
+        };
+      }
       const prompt = `
 Analyze this survey response for quality and insights:
 
