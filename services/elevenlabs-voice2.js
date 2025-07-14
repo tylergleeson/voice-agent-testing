@@ -25,7 +25,16 @@ class ElevenLabsVoice2Service extends EventEmitter {
         }
       });
 
+      // Add timeout to detect connection issues
+      const connectionTimeout = setTimeout(() => {
+        if (!this.isConnected) {
+          console.error('ElevenLabs connection timeout - open event never fired');
+          this.ws.close();
+        }
+      }, 10000); // 10 second timeout
+
       this.ws.on('open', () => {
+        clearTimeout(connectionTimeout); // Clear timeout since we connected
         console.log('ElevenLabs Voice 2.0 connected!');
         this.isConnected = true;
         
@@ -58,7 +67,10 @@ class ElevenLabsVoice2Service extends EventEmitter {
       });
 
       this.ws.on('error', (error) => {
-        console.error('ElevenLabs WebSocket error:', error);
+        console.error('=== ELEVENLABS WEBSOCKET ERROR ===');
+        console.error('Error:', error);
+        console.error('Error message:', error.message);
+        console.error('Error code:', error.code);
         this.emit('error', error);
       });
 
