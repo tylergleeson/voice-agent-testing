@@ -61,7 +61,9 @@ class VoiceStreamOrchestrator {
       });
 
       // Connect to ElevenLabs
+      console.log(`Attempting ElevenLabs connection for call: ${callSid}`);
       await elevenlabs.connect();
+      console.log(`ElevenLabs connected successfully for call: ${callSid}`);
       
       // Store the conversation
       this.activeConversations.set(callSid, {
@@ -69,6 +71,8 @@ class VoiceStreamOrchestrator {
         twilioWs: ws,
         startTime: new Date()
       });
+      
+      console.log(`Conversation stored for call: ${callSid}`);
       
     } catch (error) {
       console.error(`Failed to start conversation for call ${callSid}:`, error);

@@ -13,8 +13,11 @@ class ElevenLabsVoice2Service extends EventEmitter {
   async connect() {
     try {
       console.log('Connecting to ElevenLabs Voice 2.0...');
+      console.log('Agent ID:', this.agentId);
+      console.log('API Key length:', this.apiKey?.length);
       
       const wsUrl = `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${this.agentId}`;
+      console.log('WebSocket URL:', wsUrl);
       
       this.ws = new WebSocket(wsUrl, {
         headers: {
