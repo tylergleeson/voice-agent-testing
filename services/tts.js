@@ -53,7 +53,8 @@ class TTSService {
       fs.writeFileSync(filepath, response.data);
       
       // Return URL accessible by Twilio
-      const audioUrl = `${process.env.BASE_URL}/audio/${filename}`;
+      const baseUrl = process.env.BASE_URL || 'https://voice-agent-testing-production.up.railway.app';
+      const audioUrl = `${baseUrl}/audio/${filename}`;
       console.log(`Audio generated: ${audioUrl}`);
       
       return audioUrl;
