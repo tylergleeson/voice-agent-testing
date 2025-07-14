@@ -13,6 +13,12 @@ class TTSService {
   async generateAudio(text) {
     try {
       console.log(`Generating audio for: "${text}"`);
+      console.log('ElevenLabs config check:', {
+        hasApiKey: !!this.apiKey,
+        apiKeyLength: this.apiKey?.length,
+        hasVoiceId: !!this.voiceId,
+        voiceId: this.voiceId
+      });
       
       // Check if ElevenLabs is configured
       if (!this.apiKey || this.apiKey === 'your_elevenlabs_key') {
