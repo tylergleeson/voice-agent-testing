@@ -78,23 +78,28 @@ class TwilioMediaStreamService extends EventEmitter {
         
         // If we're getting media but haven't started yet, create synthetic start
         if (!connectionInfo.hasEmittedStart) {
-          console.log('[Twilio] Media received without start event - creating synthetic start');
-          // Use timestamp or sequence to create unique stream ID
-          const syntheticStreamSid = `SYN${Date.now()}`;
-          connectionInfo.streamSid = syntheticStreamSid;
+          console.log('*** [Twilio] CREATING SYNTHETIC START EVENT ***');
+          
+          // Use timestamp for unique IDs
+          const timestamp = Date.now();
+          connectionInfo.streamSid = `SYN${timestamp}`;
+          connectionInfo.callSid = `CALL${timestamp}`;
           connectionInfo.hasEmittedStart = true;
           
-          // We need to get callSid from somewhere - let's use a counter or timestamp
-          const syntheticCallSid = `CALL${Date.now()}`;
-          connectionInfo.callSid = syntheticCallSid;
+          console.log(`[Twilio] Synthetic CallSid: ${connectionInfo.callSid}`);
+          console.log(`[Twilio] Synthetic StreamSid: ${connectionInfo.streamSid}`);
           
-          console.log(`[Twilio] Created synthetic connection: ${syntheticCallSid}`);
-          this.connections.set(syntheticCallSid, { ws, streamSid: syntheticStreamSid });
+          // Store connection
+          this.connections.set(connectionInfo.callSid, { 
+            ws, 
+            streamSid: connectionInfo.streamSid 
+          });
           
           // Emit synthetic start event
+          console.log('[Twilio] Emitting synthetic stream_started event');
           this.emit('stream_started', {
-            callSid: syntheticCallSid,
-            streamSid: syntheticStreamSid,
+            callSid: connectionInfo.callSid,
+            streamSid: connectionInfo.streamSid,
             ws: ws
           });
         }
