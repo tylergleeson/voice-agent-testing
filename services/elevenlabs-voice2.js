@@ -114,17 +114,21 @@ class ElevenLabsVoice2Service extends EventEmitter {
       return;
     }
 
-    // Convert Twilio's μ-law audio to format expected by ElevenLabs
-    // For now, send as-is but with proper format - ElevenLabs should handle conversion
+    // ElevenLabs expects PCM 16kHz but Twilio sends μ-law 8kHz
+    // For now, we need to skip audio conversion and see if ElevenLabs can handle it
+    // In production, we'd need proper audio format conversion
+    
     const message = {
-      type: "user_audio_chunk",
       user_audio_chunk: {
         chunk: audioBase64
       }
     };
 
-    console.log('Sending audio chunk to ElevenLabs (length:', audioBase64.length, ')');
-    this.ws.send(JSON.stringify(message));
+    // Send less frequently to avoid overwhelming
+    if (Math.random() < 0.1) { // Send only 10% of audio chunks for testing
+      console.log('Sending audio chunk to ElevenLabs (length:', audioBase64.length, ')');
+      this.ws.send(JSON.stringify(message));
+    }
   }
 
   sendPong() {

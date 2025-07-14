@@ -74,33 +74,7 @@ class TwilioMediaStreamService extends EventEmitter {
         // Incoming audio from caller
         const audioPayload = data.media.payload;
         
-        // If we're getting media but haven't started yet, create synthetic start
-        if (!connectionInfo.hasEmittedStart) {
-          console.log('*** [Twilio] CREATING SYNTHETIC START EVENT ***');
-          
-          // Use timestamp for unique IDs
-          const timestamp = Date.now();
-          connectionInfo.streamSid = `SYN${timestamp}`;
-          connectionInfo.callSid = `CALL${timestamp}`;
-          connectionInfo.hasEmittedStart = true;
-          
-          console.log(`[Twilio] Synthetic CallSid: ${connectionInfo.callSid}`);
-          console.log(`[Twilio] Synthetic StreamSid: ${connectionInfo.streamSid}`);
-          
-          // Store connection
-          this.connections.set(connectionInfo.callSid, { 
-            ws, 
-            streamSid: connectionInfo.streamSid 
-          });
-          
-          // Emit synthetic start event
-          console.log('[Twilio] Emitting synthetic stream_started event');
-          this.emit('stream_started', {
-            callSid: connectionInfo.callSid,
-            streamSid: connectionInfo.streamSid,
-            ws: ws
-          });
-        }
+        // No longer need synthetic start since real start event works
         
         // Use the connection info
         if (connectionInfo && connectionInfo.callSid) {
