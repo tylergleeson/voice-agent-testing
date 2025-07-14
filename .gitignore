@@ -1,0 +1,9 @@
+node_modules/
+.env
+audio/*.mp3
+recordings/*.wav
+recordings/*.mp3
+temp/
+temp_audio.wav
+*.log
+.DS_Store
