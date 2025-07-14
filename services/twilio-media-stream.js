@@ -20,7 +20,8 @@ class TwilioMediaStreamService extends EventEmitter {
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message);
-        console.log('Raw Twilio message:', JSON.stringify(data, null, 2));
+        // Only log event type to reduce noise
+        console.log(`[Twilio Event] ${data.event}`);
         
         // Store connection info from start event
         if (data.event === 'start') {
@@ -66,7 +67,9 @@ class TwilioMediaStreamService extends EventEmitter {
         break;
         
       case 'start':
-        console.log('Media stream started:', data.start);
+        console.log('=== MEDIA STREAM START EVENT ===');
+        console.log('CallSid:', data.start.callSid);
+        console.log('StreamSid:', data.start.streamSid);
         this.emit('stream_started', {
           callSid: data.start.callSid,
           streamSid: data.start.streamSid,
