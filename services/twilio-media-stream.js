@@ -12,25 +12,29 @@ class TwilioMediaStreamService extends EventEmitter {
     console.log('Headers:', req.headers);
     console.log('URL:', req.url);
     
-    let callSid = null;
-    let streamSid = null;
+    let connectionInfo = {
+      callSid: null,
+      streamSid: null
+    };
 
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message);
-        this.handleTwilioMessage(ws, data);
         
-        // Store connection info
+        // Store connection info from start event
         if (data.event === 'start') {
-          callSid = data.start.callSid;
-          streamSid = data.start.streamSid;
-          this.connections.set(callSid, { ws, streamSid });
-          console.log(`Media stream started for call: ${callSid}`);
+          connectionInfo.callSid = data.start.callSid;
+          connectionInfo.streamSid = data.start.streamSid;
+          this.connections.set(connectionInfo.callSid, { ws, streamSid: connectionInfo.streamSid });
+          console.log(`Media stream started for call: ${connectionInfo.callSid}`);
           console.log('Emitting stream_started event with data:', {
             callSid: data.start.callSid,
             streamSid: data.start.streamSid
           });
         }
+        
+        // Handle message with connection info
+        this.handleTwilioMessage(ws, data, connectionInfo);
         
       } catch (error) {
         console.error('Error parsing Twilio message:', error);
@@ -39,9 +43,9 @@ class TwilioMediaStreamService extends EventEmitter {
 
     ws.on('close', () => {
       console.log('Twilio Media Stream disconnected');
-      if (callSid) {
-        this.connections.delete(callSid);
-        this.emit('call_ended', callSid);
+      if (connectionInfo.callSid) {
+        this.connections.delete(connectionInfo.callSid);
+        this.emit('call_ended', connectionInfo.callSid);
       }
     });
 
@@ -50,7 +54,7 @@ class TwilioMediaStreamService extends EventEmitter {
     });
   }
 
-  handleTwilioMessage(ws, data) {
+  handleTwilioMessage(ws, data, connectionInfo) {
     console.log('Twilio event:', data.event);
     
     switch (data.event) {
@@ -72,9 +76,9 @@ class TwilioMediaStreamService extends EventEmitter {
         // Incoming audio from caller
         const audioPayload = data.media.payload;
         // Use the stored callSid from the connection
-        if (callSid) {
+        if (connectionInfo && connectionInfo.callSid) {
           this.emit('audio_received', {
-            callSid: callSid,
+            callSid: connectionInfo.callSid,
             audio: audioPayload,
             ws: ws
           });
