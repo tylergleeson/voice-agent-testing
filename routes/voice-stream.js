@@ -27,11 +27,18 @@ router.post('/webhook-stream', async (req, res) => {
       // Start media streaming for real-time conversation
       console.log('Starting Twilio Media Streams...');
       
+      // Use BASE_URL for Railway deployment
+      const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
+      const wsUrl = `${baseUrl.replace('https://', 'wss://')}/voice/media-stream`;
+      console.log('WebSocket URL for Twilio:', wsUrl);
+      
       const start = twiml.start();
       start.stream({
         name: 'elevenlabs-voice2-stream',
-        url: `wss://${req.get('host')}/voice/media-stream`
+        url: wsUrl
       });
+      
+      console.log('Media stream configuration added to TwiML');
       
       // Welcome message while setting up stream
       twiml.say({
