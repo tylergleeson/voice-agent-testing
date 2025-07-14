@@ -9,7 +9,7 @@ const testRoutes = require('./routes/test');
 
 const app = express();
 // Enable WebSocket support
-expressWs(app);
+const wsInstance = expressWs(app);
 
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
@@ -23,6 +23,13 @@ app.use('/recordings', express.static('recordings'));
 app.use('/voice', voiceRoutes);
 app.use('/voice', voiceStreamRoutes); // Voice 2.0 streaming routes
 app.use('/test', testRoutes);
+
+// WebSocket endpoint for Twilio Media Streams (must be after regular routes)
+app.ws('/voice/media-stream', (ws, req) => {
+  console.log('New Twilio Media Stream WebSocket connection');
+  const TwilioMediaStreamService = require('./services/twilio-media-stream');
+  TwilioMediaStreamService.handleConnection(ws, req);
+});
 
 // Health check
 app.get('/', (req, res) => {

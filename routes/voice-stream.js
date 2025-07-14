@@ -53,11 +53,7 @@ router.post('/webhook-stream', async (req, res) => {
   res.send(twiml.toString());
 });
 
-// WebSocket endpoint for Twilio Media Streams
-router.ws('/media-stream', (ws, req) => {
-  console.log('New Twilio Media Stream WebSocket connection');
-  TwilioMediaStreamService.handleConnection(ws, req);
-});
+// Note: WebSocket endpoint is registered in server.js due to express-ws requirements
 
 // Status endpoint for Voice 2.0
 router.get('/stream-status', (req, res) => {
