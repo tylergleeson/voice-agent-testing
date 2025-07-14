@@ -70,7 +70,7 @@ const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || 'https://voice-agent-testing-production.up.railway.app';
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT} - Voice 2.0 Ready`);
   console.log(`Original Webhook URL: ${BASE_URL}/voice/webhook`);
   console.log(`Voice 2.0 Webhook URL: ${BASE_URL}/voice/webhook-stream`);
   console.log(`WebSocket URL: wss://${BASE_URL.replace('https://', '')}/voice/media-stream`);
