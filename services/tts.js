@@ -5,9 +5,15 @@ const { v4: uuidv4 } = require('uuid');
 
 class TTSService {
   constructor() {
-    this.apiKey = process.env.ELEVENLABS_API_KEY;
-    this.voiceId = process.env.ELEVENLABS_VOICE_ID;
     this.baseUrl = 'https://api.elevenlabs.io/v1';
+  }
+  
+  get apiKey() {
+    return process.env.ELEVENLABS_API_KEY;
+  }
+  
+  get voiceId() {
+    return process.env.ELEVENLABS_VOICE_ID || 'pNInz6obpgDQGcFmaJgB';
   }
 
   async generateAudio(text) {
