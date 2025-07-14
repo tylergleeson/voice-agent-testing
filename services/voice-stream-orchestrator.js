@@ -8,8 +8,11 @@ class VoiceStreamOrchestrator {
   }
 
   setupEventHandlers() {
+    console.log('Setting up Voice Stream Orchestrator event handlers...');
+    
     // Handle Twilio Media Stream events
     TwilioMediaStreamService.on('stream_started', (streamData) => {
+      console.log('Orchestrator received stream_started event');
       this.startConversation(streamData);
     });
 
@@ -18,8 +21,11 @@ class VoiceStreamOrchestrator {
     });
 
     TwilioMediaStreamService.on('call_ended', (callSid) => {
+      console.log('Orchestrator received call_ended event');
       this.endConversation(callSid);
     });
+    
+    console.log('Event handlers setup complete');
   }
 
   async startConversation(streamData) {

@@ -26,6 +26,10 @@ class TwilioMediaStreamService extends EventEmitter {
           streamSid = data.start.streamSid;
           this.connections.set(callSid, { ws, streamSid });
           console.log(`Media stream started for call: ${callSid}`);
+          console.log('Emitting stream_started event with data:', {
+            callSid: data.start.callSid,
+            streamSid: data.start.streamSid
+          });
         }
         
       } catch (error) {
