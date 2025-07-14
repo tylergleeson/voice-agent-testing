@@ -78,7 +78,7 @@ class VoiceStreamOrchestrator {
   forwardToElevenLabs(audioData) {
     const conversation = this.activeConversations.get(audioData.callSid);
     if (!conversation) {
-      console.error(`No active conversation for call: ${audioData.callSid}`);
+      console.log(`Not connected to ElevenLabs`);
       return;
     }
 

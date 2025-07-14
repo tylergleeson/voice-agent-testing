@@ -14,7 +14,8 @@ class TwilioMediaStreamService extends EventEmitter {
     
     let connectionInfo = {
       callSid: null,
-      streamSid: null
+      streamSid: null,
+      hasEmittedStart: false
     };
 
     ws.on('message', (message) => {
@@ -74,7 +75,31 @@ class TwilioMediaStreamService extends EventEmitter {
       case 'media':
         // Incoming audio from caller
         const audioPayload = data.media.payload;
-        // Use the stored callSid from the connection
+        
+        // If we're getting media but haven't started yet, create synthetic start
+        if (!connectionInfo.hasEmittedStart) {
+          console.log('[Twilio] Media received without start event - creating synthetic start');
+          // Use timestamp or sequence to create unique stream ID
+          const syntheticStreamSid = `SYN${Date.now()}`;
+          connectionInfo.streamSid = syntheticStreamSid;
+          connectionInfo.hasEmittedStart = true;
+          
+          // We need to get callSid from somewhere - let's use a counter or timestamp
+          const syntheticCallSid = `CALL${Date.now()}`;
+          connectionInfo.callSid = syntheticCallSid;
+          
+          console.log(`[Twilio] Created synthetic connection: ${syntheticCallSid}`);
+          this.connections.set(syntheticCallSid, { ws, streamSid: syntheticStreamSid });
+          
+          // Emit synthetic start event
+          this.emit('stream_started', {
+            callSid: syntheticCallSid,
+            streamSid: syntheticStreamSid,
+            ws: ws
+          });
+        }
+        
+        // Use the connection info
         if (connectionInfo && connectionInfo.callSid) {
           this.emit('audio_received', {
             callSid: connectionInfo.callSid,
@@ -82,8 +107,7 @@ class TwilioMediaStreamService extends EventEmitter {
             ws: ws
           });
         } else {
-          // Skip audio until we have a callSid
-          console.log('Skipping audio - no callSid yet');
+          console.log('[Twilio] Skipping audio - no callSid yet');
         }
         break;
         
