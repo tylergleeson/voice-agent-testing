@@ -65,7 +65,11 @@ class TTSService {
       
       return audioUrl;
     } catch (error) {
-      console.error('TTS Error:', error.response?.data || error.message);
+      console.error('TTS Error Details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data ? Buffer.from(error.response.data).toString() : error.message
+      });
       throw error;
     }
   }
