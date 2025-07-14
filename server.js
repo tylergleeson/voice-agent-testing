@@ -1,11 +1,15 @@
 const express = require('express');
 const cors = require('cors');
+const expressWs = require('express-ws');
 require('dotenv').config();
 
 const voiceRoutes = require('./routes/voice');
+const voiceStreamRoutes = require('./routes/voice-stream');
 const testRoutes = require('./routes/test');
 
 const app = express();
+// Enable WebSocket support
+expressWs(app);
 
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
@@ -17,6 +21,7 @@ app.use('/recordings', express.static('recordings'));
 
 // Routes
 app.use('/voice', voiceRoutes);
+app.use('/voice', voiceStreamRoutes); // Voice 2.0 streaming routes
 app.use('/test', testRoutes);
 
 // Health check
@@ -59,12 +64,16 @@ const BASE_URL = process.env.BASE_URL || 'https://voice-agent-testing-production
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Webhook URL: ${BASE_URL}/voice/webhook`);
+  console.log(`Original Webhook URL: ${BASE_URL}/voice/webhook`);
+  console.log(`Voice 2.0 Webhook URL: ${BASE_URL}/voice/webhook-stream`);
+  console.log(`WebSocket URL: wss://${BASE_URL.replace('https://', '')}/voice/media-stream`);
   console.log('Environment check:', {
     PORT,
     BASE_URL,
     TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID ? 'Set' : 'Missing',
     TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN ? 'Set' : 'Missing',
-    TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER || 'Missing'
+    TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER || 'Missing',
+    ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY ? 'Set' : 'Missing',
+    ELEVENLABS_AGENT_ID: process.env.ELEVENLABS_AGENT_ID ? 'Set' : 'Missing - REQUIRED FOR VOICE 2.0'
   });
 });
