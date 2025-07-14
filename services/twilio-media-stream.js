@@ -20,6 +20,7 @@ class TwilioMediaStreamService extends EventEmitter {
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message);
+        console.log('Raw Twilio message:', JSON.stringify(data, null, 2));
         
         // Store connection info from start event
         if (data.event === 'start') {
@@ -38,6 +39,7 @@ class TwilioMediaStreamService extends EventEmitter {
         
       } catch (error) {
         console.error('Error parsing Twilio message:', error);
+        console.error('Raw message:', message.toString());
       }
     });
 

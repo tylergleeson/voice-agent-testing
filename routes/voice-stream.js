@@ -62,10 +62,12 @@ router.post('/webhook-stream', async (req, res) => {
   }
   
   console.log('=== SENDING VOICE 2.0 RESPONSE ===');
-  console.log('TwiML Length:', twiml.toString().length);
+  const twimlString = twiml.toString();
+  console.log('TwiML:', twimlString);
+  console.log('TwiML Length:', twimlString.length);
   
   res.type('text/xml');
-  res.send(twiml.toString());
+  res.send(twimlString);
 });
 
 // Note: WebSocket endpoint is registered in server.js due to express-ws requirements
