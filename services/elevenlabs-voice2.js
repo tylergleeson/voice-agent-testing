@@ -100,12 +100,16 @@ class ElevenLabsVoice2Service extends EventEmitter {
       return;
     }
 
+    // Convert Twilio's μ-law audio to format expected by ElevenLabs
+    // For now, send as-is but with proper format - ElevenLabs should handle conversion
     const message = {
+      type: "user_audio_chunk",
       user_audio_chunk: {
         chunk: audioBase64
       }
     };
 
+    console.log('Sending audio chunk to ElevenLabs (length:', audioBase64.length, ')');
     this.ws.send(JSON.stringify(message));
   }
 

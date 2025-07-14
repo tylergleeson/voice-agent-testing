@@ -53,7 +53,7 @@ class TwilioMediaStreamService extends EventEmitter {
   }
 
   handleTwilioMessage(ws, data, connectionInfo) {
-    console.log(`[Twilio Event] ${data.event}`);
+    console.log(`[Twilio Event] ${data.event} (hasEmittedStart: ${connectionInfo.hasEmittedStart})`);
     
     switch (data.event) {
       case 'connected':
