@@ -32,18 +32,26 @@ router.post('/webhook-stream', async (req, res) => {
       const wsUrl = `${baseUrl.replace('https://', 'wss://')}/voice/media-stream`;
       console.log('WebSocket URL for Twilio:', wsUrl);
       
+      // Welcome message before starting stream
+      twiml.say({
+        voice: 'Polly.Joanna'
+      }, 'Hello! Connecting you to our AI assistant.');
+      
+      // Add a pause to let the message play
+      twiml.pause({ length: 1 });
+      
+      // Start media streaming
       const start = twiml.start();
       start.stream({
         name: 'elevenlabs-voice2-stream',
-        url: wsUrl
+        url: wsUrl,
+        track: 'both_tracks' // Include both inbound and outbound audio
       });
       
       console.log('Media stream configuration added to TwiML');
       
-      // Welcome message while setting up stream
-      twiml.say({
-        voice: 'Polly.Joanna'
-      }, 'Hello! Connecting you to our AI assistant. Please wait a moment.');
+      // Add a long pause to keep the call open while streaming
+      twiml.pause({ length: 60 });
     }
     
   } catch (error) {
