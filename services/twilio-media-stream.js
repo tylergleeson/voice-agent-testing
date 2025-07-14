@@ -51,6 +51,8 @@ class TwilioMediaStreamService extends EventEmitter {
   }
 
   handleTwilioMessage(ws, data) {
+    console.log('Twilio event:', data.event);
+    
     switch (data.event) {
       case 'connected':
         console.log('Twilio Media Stream connected');
@@ -69,11 +71,17 @@ class TwilioMediaStreamService extends EventEmitter {
       case 'media':
         // Incoming audio from caller
         const audioPayload = data.media.payload;
-        this.emit('audio_received', {
-          callSid: data.start?.callSid,
-          audio: audioPayload,
-          ws: ws
-        });
+        // Use the stored callSid from the connection
+        if (callSid) {
+          this.emit('audio_received', {
+            callSid: callSid,
+            audio: audioPayload,
+            ws: ws
+          });
+        } else {
+          // Skip audio until we have a callSid
+          console.log('Skipping audio - no callSid yet');
+        }
         break;
         
       case 'stop':
