@@ -142,6 +142,20 @@ function getNextQuestion(session) {
 async function processRecording(session, recordingUrl) {
   console.log(`Processing recording: ${recordingUrl}`);
   
+  // Skip processing if API keys not configured
+  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your_openai_key') {
+    console.log('Skipping recording processing - OpenAI API key not configured');
+    session.responses.push({
+      questionIndex: session.currentQuestion - 1,
+      question: testQuestions[session.currentQuestion - 1],
+      recordingUrl,
+      transcription: { text: '[Recording received - processing skipped]' },
+      analysis: { qualityScore: 0 },
+      timestamp: new Date()
+    });
+    return;
+  }
+  
   try {
     // Transcribe the recording
     const transcription = await require('../services/transcription').transcribe(recordingUrl);
