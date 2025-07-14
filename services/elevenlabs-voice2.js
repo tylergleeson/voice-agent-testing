@@ -28,6 +28,17 @@ class ElevenLabsVoice2Service extends EventEmitter {
       this.ws.on('open', () => {
         console.log('ElevenLabs Voice 2.0 connected!');
         this.isConnected = true;
+        
+        // Send conversation initiation message
+        console.log('Sending conversation initiation...');
+        const initMessage = {
+          type: "conversation_initiation_client_data",
+          conversation_initiation_client_data: {
+            custom_llm_extra_body: {}
+          }
+        };
+        this.ws.send(JSON.stringify(initMessage));
+        
         this.emit('connected');
       });
 
